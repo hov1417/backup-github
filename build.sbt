@@ -7,3 +7,5 @@ lazy val root = (project in file("."))
         name                                    := "backup-github",
         libraryDependencies += "org.scala-lang" %% "toolkit" % "0.2.0"
     )
+
+enablePlugins(GraalVMNativeImagePlugin)
