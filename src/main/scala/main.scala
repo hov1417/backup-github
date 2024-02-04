@@ -23,6 +23,8 @@ class Repository(name: String, sshUrl: String):
     def bundle(dir: String): Unit = {
         Seq(
             "git",
+            "-C",
+            dir + "/" + this.name,
             "bundle",
             "create",
             dir + "/" + this.name + ".bundle",
@@ -32,7 +34,7 @@ class Repository(name: String, sshUrl: String):
 
 def cleanDir(dir: String): Unit = Seq("rm", "-rf", dir) !!
 
-private def homedir = System.getProperty("user.home");
+private val homedir = System.getProperty("user.home");
 
 def bundleDir(dir: String): Unit = Seq(
     "tar",
