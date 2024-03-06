@@ -1,14 +1,19 @@
-ThisBuild / version := "0.1.0-SNAPSHOT"
+ThisBuild / version := "0.1.0"
 
 ThisBuild / scalaVersion := "3.3.1"
 
 lazy val root = (project in file("."))
     .enablePlugins(GraalVMNativeImagePlugin)
-    .enablePlugins(LinuxPlugin)
     .settings(
-        name                                    := "backup-github",
-        libraryDependencies += "org.scala-lang" %% "toolkit" % "0.2.0",
-        graalVMNativeImageOptions += "--no-fallback",
-        graalVMNativeImageGraalVersion := Some("22.1.0")
+        name := "liv",
+        description := "Liv (named after historian Titus Livius) is a CLI tool to backup GitHub data",
+        libraryDependencies += "org.scala-lang" %% "toolkit"  % "0.2.1",
+        libraryDependencies += "com.47deg"      %% "github4s" % "0.33.3",
+        libraryDependencies += "org.ekrich"     %% "sconfig"  % "1.6.0",
+        graalVMNativeImageOptions ++= Seq(
+            "--no-fallback",
+            "--enable-url-protocols=https",
+            "--gc=G1",
+            "-Djava.net.preferIPv6Addresses=true"
+        )
     )
-
