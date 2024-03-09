@@ -10,10 +10,12 @@ lazy val root = (project in file("."))
         libraryDependencies += "org.scala-lang" %% "toolkit"  % "0.2.1",
         libraryDependencies += "com.47deg"      %% "github4s" % "0.33.3",
         libraryDependencies += "org.ekrich"     %% "sconfig"  % "1.6.0",
+        libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "6.8.0.202311291450-r",
         graalVMNativeImageOptions ++= Seq(
             "--no-fallback",
             "--enable-url-protocols=https",
             "--gc=G1",
-            "-Djava.net.preferIPv6Addresses=true"
+            "-Djava.net.preferIPv6Addresses=true",
+            "-H:Optimize=2"
         )
     )

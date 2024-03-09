@@ -1,41 +1,60 @@
 import cats.effect.{ExitCode, IO, IOApp}
+import cats.implicits.*
 import github4s.GithubClient
+import org.eclipse.jgit
+import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.lib.NullProgressMonitor
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.eclipse.jgit.transport.BundleWriter
 import org.ekrich.config.{Config, ConfigException, ConfigFactory}
 import org.http4s.client.JavaNetClientBuilder
 
+import java.io.{File, FileOutputStream}
+import scala.concurrent.{Future, blocking}
 import scala.io.Source
 import scala.language.postfixOps
 import scala.sys.process.*
 
 class Repository(name: String, sshUrl: String):
+    private var git: Git = _
 
-    def cloneTo(dir: String): Unit = {
-        Seq(
-            "git",
-            "clone",
-            this.sshUrl,
-            dir + "/" + this.name
-        ) !!<
+    def cloneTo(dir: String): IO[Unit] = {
+        IO.blocking {
+            println("Cloning " + name + " to " + dir + "/" + name)
+            this.git = Git
+                .cloneRepository()
+                .setURI(sshUrl)
+                .setDirectory(new File(dir + "/" + name))
+                .call()
+            println("Cloned " + name)
+        }
     }
 
     def cleanClone(dir: String): Unit = {
         Seq(
             "rm",
             "-rf",
-            dir + "/" + this.name
+            dir + "/" + name
         ) !!<
     }
 
-    def bundle(dir: String): Unit = {
-        Seq(
-            "git",
-            "-C",
-            dir + "/" + this.name,
-            "bundle",
-            "create",
-            dir + "/" + this.name + ".bundle",
-            "--all"
-        ) !!<
+    def bundle(dir: String): IO[Unit] = {
+        IO.blocking {
+            val repo = git.getRepository
+            println("Bundling " + name)
+
+            val bundle = new BundleWriter(repo)
+
+            repo.getRefDatabase.getRefs
+                .forEach(ref => bundle.include(ref))
+
+            bundle.writeBundle(
+                NullProgressMonitor.INSTANCE,
+                new FileOutputStream(dir + "/" + name + ".bundle")
+            )
+
+            println("Bundled " + name)
+        }
     }
 
 def cleanDir(dir: String): Unit = Seq("rm", "-rf", dir) !!
@@ -47,7 +66,7 @@ private val livConfigPath = configPath + "/liv/liv.conf"
 def bundleDir(dir: String): Unit = Seq(
     "tar",
     "-cf",
-    homedir + "/Backup/github/" + java.time.LocalDate.now.toString + "-bundles. tar",
+    homedir + "/Backup/github/" + java.time.LocalDate.now.toString + "-bundles.tar",
     dir
 ) !!
 
@@ -86,7 +105,7 @@ def getRepositories: IO[List[Repository]] = {
         }
         rawRepositoriesList <- IO.fromEither(rawRepositoriesListResult.result)
         repositories = rawRepositoriesList.map(v =>
-            Repository(v.name, v.urls.ssh_url)
+            Repository(v.name, v.urls.clone_url)
         )
     } yield repositories
 }
@@ -99,11 +118,14 @@ object Liv extends IOApp {
 
         for {
             repositories <- getRepositories
+            results <- repositories.parTraverse(r => {
+                for {
+                    _ <- r.cloneTo(tmpDir)
+                    _ <- r.bundle(tmpDir)
+                    _ <- IO.pure(r.cleanClone(tmpDir))
+                } yield ()
+            })
         } yield {
-            repositories.foreach(r => r.cloneTo(tmpDir))
-            repositories.foreach(r => r.bundle(tmpDir))
-            repositories.foreach(r => r.cleanClone(tmpDir))
-
             bundleDir(tmpDir)
 
             cleanDir(tmpDir)
