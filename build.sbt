@@ -16,6 +16,11 @@ lazy val root = (project in file("."))
             "--enable-url-protocols=https",
             "--gc=G1",
             "-Djava.net.preferIPv6Addresses=true",
-            "-H:Optimize=2"
+            "-H:Optimize=2",
+            "-H:ReflectionConfigurationFiles=../../reflectconfig.json",
+            "-H:IncludeResourceBundles=org.eclipse.jgit.internal.JGitText_en-US",
+            "-H:IncludeLocales=en",
+            "-Duser.country=US",
+            "-Duser.language=en"
         )
     )
