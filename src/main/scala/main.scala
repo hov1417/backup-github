@@ -4,13 +4,12 @@ import github4s.GithubClient
 import org.eclipse.jgit
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.NullProgressMonitor
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.BundleWriter
+import org.eclipse.jgit.util.FileUtils
 import org.ekrich.config.{Config, ConfigException, ConfigFactory}
 import org.http4s.client.JavaNetClientBuilder
 
 import java.io.{File, FileOutputStream}
-import scala.concurrent.{Future, blocking}
 import scala.io.Source
 import scala.language.postfixOps
 import scala.sys.process.*
@@ -30,12 +29,12 @@ class Repository(name: String, sshUrl: String):
         }
     }
 
-    def cleanClone(dir: String): Unit = {
-        Seq(
-            "rm",
-            "-rf",
-            dir + "/" + name
-        ) !!<
+    def cleanClone(dir: String): IO[Unit] = {
+        IO.blocking {
+            println("Cleaning " + name + " from " + dir)
+            FileUtils.delete(new File(dir + "/" + name), FileUtils.RECURSIVE)
+            println("Cleaned " + name)
+        }
     }
 
     def bundle(dir: String): IO[Unit] = {
@@ -122,7 +121,7 @@ object Liv extends IOApp {
                 for {
                     _ <- r.cloneTo(tmpDir)
                     _ <- r.bundle(tmpDir)
-                    _ <- IO.pure(r.cleanClone(tmpDir))
+                    _ <- r.cleanClone(tmpDir)
                 } yield ()
             })
         } yield {
