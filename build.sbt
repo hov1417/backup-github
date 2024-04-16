@@ -11,6 +11,8 @@ lazy val root = (project in file("."))
         libraryDependencies += "com.47deg"      %% "github4s" % "0.33.3",
         libraryDependencies += "org.ekrich"     %% "sconfig"  % "1.6.0",
         libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "6.8.0.202311291450-r",
+        libraryDependencies += "org.slf4j" % "slf4j-api"    % "1.7.36",
+        libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.36",
         graalVMNativeImageOptions ++= Seq(
             "--no-fallback",
             "--enable-url-protocols=https",

@@ -67,7 +67,7 @@ def bundleDir(dir: String): Unit = Seq(
     "-cf",
     homedir + "/Backup/github/" + java.time.LocalDate.now.toString + "-bundles.tar",
     dir
-) !!
+) !! ProcessLogger.apply(err => {})
 
 extension (c: Config)
     def getReqStr(path: String): String =
